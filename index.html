@@ -17,31 +17,14 @@
       <input type="text" id="siteName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <div>
-        <label class="block text-gray-700 font-bold mb-2">出勤時間</label>
-        <input type="time" id="startTime" value="08:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-bold mb-2">退勤時間</label>
-        <input type="time" id="endTime" value="17:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-      </div>
-    </div>
-
-    <div class="mb-4">
-      <label class="block text-gray-700 font-bold mb-2">休憩時間 (分)</label>
-      <input type="number" id="breakTime" value="60" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-    </div>
-
     <div class="mb-4">
       <label class="block text-gray-700 font-bold mb-2">作業内容</label>
       <textarea id="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
     </div>
 
     <div class="mb-6">
-      <label class="block text-gray-700 font-bold mb-2">作業者</label>
-      <div id="workersContainer" class="space-y-2 mb-2">
-        <input type="text" class="worker-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="氏名">
+      <label class="block text-gray-700 font-bold mb-2">作業者一覧</label>
+      <div id="workersContainer" class="space-y-4 mb-4">
       </div>
       <button type="button" id="addWorkerBtn" class="text-blue-500 font-bold text-sm py-2 px-4 bg-blue-50 rounded border border-blue-500 w-full">+ 作業者を追加</button>
     </div>
@@ -51,7 +34,7 @@
 
   <script>
     const LIFF_ID = '2009631449-wR9B9bvc';
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycby3IcAQqMqAblRk36IRZ-T2BMgQcIgfTBR5B7LJNoml6fIeLi70S3ZqIikjw4aI0JgXVQ/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzcwRyiMSloZBcj0fz006FVbKvkHwrq38k7GhHRpd5_9_VEot4lRy-zxo-eMCFhKLBW/exec';
 
     let managerId = '';
     let managerName = '';
@@ -73,25 +56,55 @@
       }
     }
 
-    addWorkerBtn.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'worker-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500';
-      input.placeholder = '氏名';
-      workersContainer.appendChild(input);
-    });
+    function createWorkerBlock() {
+      const div = document.createElement('div');
+      div.className = 'worker-block bg-gray-50 p-3 rounded-lg border border-gray-200';
+      div.innerHTML = `
+        <div class="mb-2">
+          <input type="text" class="worker-name w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="氏名">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-xs text-gray-600">出勤</label>
+            <input type="time" class="worker-start w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="08:00">
+          </div>
+          <div>
+            <label class="text-xs text-gray-600">退勤</label>
+            <input type="time" class="worker-end w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="17:00">
+          </div>
+          <div>
+            <label class="text-xs text-gray-600">休憩(分)</label>
+            <input type="number" class="worker-break w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="60">
+          </div>
+        </div>
+      `;
+      workersContainer.appendChild(div);
+    }
+
+    addWorkerBtn.addEventListener('click', createWorkerBlock);
 
     submitBtn.addEventListener('click', async () => {
       const siteName = document.getElementById('siteName').value;
-      const startTime = document.getElementById('startTime').value;
-      const endTime = document.getElementById('endTime').value;
-      const breakTime = document.getElementById('breakTime').value;
       const description = document.getElementById('description').value;
       
-      const workerInputs = document.querySelectorAll('.worker-input');
-      const workers = Array.from(workerInputs)
-                           .map(input => input.value)
-                           .filter(val => val.trim() !== '');
+      const workerBlocks = document.querySelectorAll('.worker-block');
+      const workers = [];
+
+      workerBlocks.forEach(block => {
+        const name = block.querySelector('.worker-name').value;
+        const startTime = block.querySelector('.worker-start').value;
+        const endTime = block.querySelector('.worker-end').value;
+        const breakTime = block.querySelector('.worker-break').value;
+        
+        if (name.trim() !== '') {
+          workers.push({
+            name: name,
+            startTime: startTime,
+            endTime: endTime,
+            breakTime: breakTime
+          });
+        }
+      });
 
       if (!siteName || workers.length === 0) {
         alert('現場名と最低1名の作業者を入力してください。');
@@ -105,9 +118,6 @@
         managerId: managerId,
         managerName: managerName,
         siteName: siteName,
-        startTime: startTime,
-        endTime: endTime,
-        breakTime: breakTime,
         description: description,
         workers: workers
       };
@@ -128,6 +138,7 @@
       }
     });
 
+    createWorkerBlock();
     initLiff();
   </script>
 </body>
