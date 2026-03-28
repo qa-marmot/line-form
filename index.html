@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勤怠管理フォーム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-4">
+    <h1 class="text-xl font-bold mb-4 text-center text-gray-800">打刻システム</h1>
+    <p class="mb-4 text-center text-gray-600"><span id="displayName" class="font-bold"></span>さん、お疲れ様です</p>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <button type="button" class="type-btn bg-blue-100 text-blue-800 py-4 rounded-lg font-bold border-2 border-transparent transition duration-200" data-type="出勤">出勤</button>
+      <button type="button" class="type-btn bg-red-100 text-red-800 py-4 rounded-lg font-bold border-2 border-transparent transition duration-200" data-type="退勤">退勤</button>
+      <button type="button" class="type-btn bg-yellow-100 text-yellow-800 py-4 rounded-lg font-bold border-2 border-transparent transition duration-200" data-type="休憩開始">休憩開始</button>
+      <button type="button" class="type-btn bg-green-100 text-green-800 py-4 rounded-lg font-bold border-2 border-transparent transition duration-200" data-type="休憩終了">休憩終了</button>
+    </div>
+
+    <div class="mb-6">
+      <label for="remarks" class="block text-gray-700 font-bold mb-2">備考</label>
+      <textarea id="remarks" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+    </div>
+
+    <button id="submitBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200" disabled>送信する</button>
+  </div>
+
+  <script>
+    const LIFF_ID = '2009631449-wR9B9bvc';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxlXoUvaW0NRI_milNwkKOFFCHia2DN1_ZH0ZZqLfzWk9HLEuXmBBLJWGsZPj4dMn1x-Q/exec';
+
+    let userId = '';
+    let displayName = '';
+    let selectedType = '';
+
+    const typeBtns = document.querySelectorAll('.type-btn');
+    const submitBtn = document.getElementById('submitBtn');
+    const remarksInput = document.getElementById('remarks');
+    const displayNameSpan = document.getElementById('displayName');
+
+    async function initLiff() {
+      await liff.init({ liffId: LIFF_ID });
+      if (liff.isLoggedIn()) {
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        displayName = profile.displayName;
+        displayNameSpan.textContent = displayName;
+      } else {
+        liff.login();
+      }
+    }
+
+    typeBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        typeBtns.forEach(b => b.classList.remove('border-blue-500'));
+        e.target.classList.add('border-blue-500');
+        selectedType = e.target.getAttribute('data-type');
+        submitBtn.disabled = false;
+      });
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      if (!selectedType) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '送信中...';
+
+      const payload = {
+        userId: userId,
+        displayName: displayName,
+        type: selectedType,
+        remarks: remarksInput.value
+      };
+
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: {
+            'Content-Type': 'text/plain'
+          }
+        });
+        liff.closeWindow();
+      } catch (error) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '送信する';
+        alert('送信エラーが発生しました');
+      }
+    });
+
+    initLiff();
+  </script>
+</body>
+</html>
