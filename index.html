@@ -4,51 +4,365 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>現場勤怠報告フォーム</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3347;
+      --accent: #f59e0b;
+      --accent2: #fbbf24;
+      --text-primary: #f1f3f9;
+      --text-secondary: #8b91a8;
+      --text-muted: #555d7a;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Noto Sans JP', sans-serif;
+      color: var(--text-primary);
+      padding: 16px 16px 40px;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-top: 8px;
+    }
+    .header-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .header-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+    }
+    .header-user {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .header-user .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+    }
+    .header-user strong {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    /* ─── Card ─── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    /* ─── Inputs ─── */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="time"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+    input[type="time"],
+    input[type="number"] {
+      font-size: 14px;
+      padding: 10px 10px;
+    }
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+    textarea { resize: none; }
+    input::placeholder, textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ─── Worker Block ─── */
+    .workers-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .worker-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 10px;
+      position: relative;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .worker-index {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .worker-name-row { margin-bottom: 10px; }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .time-cell label {
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .remove-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .remove-btn:hover {
+      color: var(--danger);
+      background: rgba(239,68,68,0.1);
+    }
+
+    /* ─── Add Worker Button ─── */
+    .add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: transparent;
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      margin-top: 4px;
+    }
+    .add-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(245,158,11,0.04);
+    }
+    .add-btn svg { flex-shrink: 0; }
+
+    /* ─── Submit Button ─── */
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #0f1117;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+      margin-top: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: var(--accent2);
+      transform: translateY(-1px);
+    }
+    .submit-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .submit-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .submit-btn .arrow {
+      display: inline-block;
+      margin-left: 6px;
+      transition: transform 0.2s;
+    }
+    .submit-btn:hover:not(:disabled) .arrow {
+      transform: translateX(4px);
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 14px 0;
+    }
+
+    /* ─── Worker count badge ─── */
+    .count-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .count-badge span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* date display */
+    .date-bar {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-4">
-  <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-4">
-    <h1 class="text-xl font-bold mb-4 text-center text-gray-800">現場勤怠報告</h1>
-    <p class="mb-4 text-center text-gray-600"><span id="displayName" class="font-bold"></span>さんが報告中</p>
+<body>
 
-    <div class="mb-4">
-      <label class="block text-gray-700 font-bold mb-2">現場名</label>
-      <input type="text" id="siteName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-    </div>
-
-    <div class="mb-4">
-      <label class="block text-gray-700 font-bold mb-2">作業内容</label>
-      <textarea id="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
-    </div>
-
-    <div class="mb-6">
-      <label class="block text-gray-700 font-bold mb-2">作業者一覧</label>
-      <div id="workersContainer" class="space-y-4 mb-4">
+  <div class="header">
+    <div class="header-label">Field Report</div>
+    <div class="header-title">現場勤怠報告</div>
+    <div style="margin-top:10px; display:flex; justify-content:center;">
+      <div class="header-user">
+        <div class="dot"></div>
+        <strong id="displayName">---</strong>さんが報告中
       </div>
-      <button type="button" id="addWorkerBtn" class="text-blue-500 font-bold text-sm py-2 px-4 bg-blue-50 rounded border border-blue-500 w-full">+ 作業者を追加</button>
     </div>
-
-    <button id="submitBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200">送信する</button>
   </div>
+
+  <div class="date-bar" id="dateBar"></div>
+
+  <!-- 現場情報 -->
+  <div class="card">
+    <div class="section-label">現場情報</div>
+    <div style="margin-bottom:14px;">
+      <label>現場名</label>
+      <input type="text" id="siteName" placeholder="例）〇〇ビル新築工事">
+    </div>
+    <div>
+      <label>作業内容</label>
+      <textarea id="description" rows="3" placeholder="例）1F～3F 内装ボード貼り"></textarea>
+    </div>
+  </div>
+
+  <!-- 作業者 -->
+  <div class="card">
+    <div class="workers-header">
+      <div class="section-label" style="margin-bottom:0;">作業者一覧</div>
+      <div class="count-badge">計 <span id="workerCount">0</span> 名</div>
+    </div>
+    <div id="workersContainer"></div>
+    <button class="add-btn" id="addWorkerBtn">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      作業者を追加
+    </button>
+  </div>
+
+  <button id="submitBtn" class="submit-btn">
+    送信する <span class="arrow">→</span>
+  </button>
 
   <script>
     const LIFF_ID = '2009631449-wR9B9bvc';
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzcwRyiMSloZBcj0fz006FVbKvkHwrq38k7GhHRpd5_9_VEot4lRy-zxo-eMCFhKLBW/exec';
-
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyFpcuXZZQ32yy0Mi1TFR7AdVFcjNDXzzVdtJQxF_kVp98yCFJQOlDIpUus1fz7k8fasg/exec';
     let managerId = '';
     let managerName = '';
 
     const displayNameSpan = document.getElementById('displayName');
-    const addWorkerBtn = document.getElementById('addWorkerBtn');
+    const addWorkerBtn    = document.getElementById('addWorkerBtn');
     const workersContainer = document.getElementById('workersContainer');
-    const submitBtn = document.getElementById('submitBtn');
+    const submitBtn       = document.getElementById('submitBtn');
+    const workerCountEl   = document.getElementById('workerCount');
+
+    // Date display
+    const now = new Date();
+    document.getElementById('dateBar').textContent =
+      now.toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
 
     async function initLiff() {
       await liff.init({ liffId: LIFF_ID });
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
-        managerId = profile.userId;
+        managerId   = profile.userId;
         managerName = profile.displayName;
         displayNameSpan.textContent = managerName;
       } else {
@@ -56,52 +370,64 @@
       }
     }
 
+    function updateCount() {
+      workerCountEl.textContent = document.querySelectorAll('.worker-block').length;
+    }
+
+    let workerSeq = 0;
     function createWorkerBlock() {
+      workerSeq++;
       const div = document.createElement('div');
-      div.className = 'worker-block bg-gray-50 p-3 rounded-lg border border-gray-200';
+      div.className = 'worker-block';
       div.innerHTML = `
-        <div class="mb-2">
-          <input type="text" class="worker-name w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="氏名">
+        <button class="remove-btn" title="削除">✕</button>
+        <div class="worker-index">作業者 #${workerSeq}</div>
+        <div class="worker-name-row">
+          <label>氏名</label>
+          <input type="text" class="worker-name" placeholder="氏名を入力">
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="text-xs text-gray-600">出勤</label>
-            <input type="time" class="worker-start w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="08:00">
+        <div class="time-grid">
+          <div class="time-cell">
+            <label>出勤時刻</label>
+            <input type="time" class="worker-start" value="08:00">
           </div>
-          <div>
-            <label class="text-xs text-gray-600">退勤</label>
-            <input type="time" class="worker-end w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="17:00">
+          <div class="time-cell">
+            <label>退勤時刻</label>
+            <input type="time" class="worker-end" value="17:00">
           </div>
-          <div>
-            <label class="text-xs text-gray-600">休憩(分)</label>
-            <input type="number" class="worker-break w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm" value="60">
+          <div class="time-cell">
+            <label>休憩(分)</label>
+            <input type="number" class="worker-break" value="60" min="0" max="480">
           </div>
         </div>
       `;
+      div.querySelector('.remove-btn').addEventListener('click', () => {
+        div.style.animation = 'none';
+        div.style.opacity = '0';
+        div.style.transform = 'translateY(-6px)';
+        div.style.transition = 'opacity 0.2s, transform 0.2s';
+        setTimeout(() => { div.remove(); updateCount(); }, 200);
+      });
       workersContainer.appendChild(div);
+      updateCount();
     }
 
     addWorkerBtn.addEventListener('click', createWorkerBlock);
 
     submitBtn.addEventListener('click', async () => {
-      const siteName = document.getElementById('siteName').value;
-      const description = document.getElementById('description').value;
-      
+      const siteName    = document.getElementById('siteName').value.trim();
+      const description = document.getElementById('description').value.trim();
+
       const workerBlocks = document.querySelectorAll('.worker-block');
       const workers = [];
-
       workerBlocks.forEach(block => {
-        const name = block.querySelector('.worker-name').value;
-        const startTime = block.querySelector('.worker-start').value;
-        const endTime = block.querySelector('.worker-end').value;
-        const breakTime = block.querySelector('.worker-break').value;
-        
-        if (name.trim() !== '') {
+        const name = block.querySelector('.worker-name').value.trim();
+        if (name) {
           workers.push({
-            name: name,
-            startTime: startTime,
-            endTime: endTime,
-            breakTime: breakTime
+            name,
+            startTime: block.querySelector('.worker-start').value,
+            endTime:   block.querySelector('.worker-end').value,
+            breakTime: block.querySelector('.worker-break').value,
           });
         }
       });
@@ -112,28 +438,20 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = '送信中...';
+      submitBtn.innerHTML = '送信中... <span style="opacity:.5">⏳</span>';
 
-      const payload = {
-        managerId: managerId,
-        managerName: managerName,
-        siteName: siteName,
-        description: description,
-        workers: workers
-      };
+      const payload = { managerId, managerName, siteName, description, workers };
 
       try {
         await fetch(GAS_URL, {
           method: 'POST',
           body: JSON.stringify(payload),
-          headers: {
-            'Content-Type': 'text/plain'
-          }
+          headers: { 'Content-Type': 'text/plain' }
         });
         liff.closeWindow();
-      } catch (error) {
+      } catch (err) {
         submitBtn.disabled = false;
-        submitBtn.textContent = '送信する';
+        submitBtn.innerHTML = '送信する <span class="arrow">→</span>';
         alert('送信エラーが発生しました');
       }
     });
